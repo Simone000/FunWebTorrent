@@ -1,0 +1,41 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="page-header">
+                <h1>Test 1</h1>
+                <p>Download from video tag, create torrent, notify the server of the new couple (video link + torrenthash)</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <video id="video_1"
+                   controls
+                   src="/Content/Video/SampleVideo_1080x720_5mb.mp4"></video>
+        </div>
+    </div>
+
+    <script src="Lib/jquery/jquery.min.js"></script>
+    <script src="Lib/knockout/knockout-latest.min.js"></script>
+    <script src="Lib/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/webtorrent/latest/webtorrent.min.js"></script>
+
+    <script type="text/javascript">
+        $(function () {
+            var videoEl = document.getElementById("video_1");
+            var videoElq = $("#video_1");
+
+
+            videoElq.bind('loadeddata', function (e) {
+                console.log(e.target.duration);
+            });
+        });
+
+    </script>
+</body>
+</html>

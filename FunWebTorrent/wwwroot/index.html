@@ -1,0 +1,211 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0" />
+    <title>FunWebTorrent</title>
+
+    <link href="Lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="Lib/bootstrap/dist/css/bootstrap-theme.min.css" rel="stylesheet" />
+
+    <link href="Lib/toastr.js/toastr.min.css" rel="stylesheet" />
+
+    <style>
+        /* reset bootstrap fieldset to default behaviour */
+        fieldset {
+            border: 1px groove #ddd !important;
+            padding: 0 1.4em 1.4em 1.4em !important;
+            margin: 0 0 1.5em 0 !important;
+            -webkit-box-shadow: 0px 0px 0px 0px #000;
+            box-shadow: 0px 0px 0px 0px #000;
+        }
+
+        legend {
+            font-size: 1.2em !important;
+            font-weight: bold !important;
+            text-align: left !important;
+            width: inherit; /* Or auto */
+            padding: 0 10px;
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- header -->
+    <nav role="navigation" class="navbar navbar-inverse navbar-fixed-top" id="div_header">
+        <div class="container">
+            <div class="navbar-header navbar-left pull-left">
+                <a href="#" class="navbar-brand">FunWebTorrent</a>
+            </div>
+
+            <div class="navbar-header navbar-right pull-right">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+            </div>
+
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav navbar-left">
+                    <!--
+                    <li>
+                        <a href="/swagger/index.html">API</a>
+                    </li>
+                     -->
+                </ul>
+
+                <ul class="nav navbar-nav navbar-right">
+                    <!--
+                    <li>
+                        <a href="#">right</a>
+                    </li>
+                    -->
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- body -->
+    <div class="container">
+
+        <div class="row">
+            <div class="page-header">
+                <h1>Web Torrent</h1>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-offset-4 col-sm-4">
+                <p>Recap</p>
+                <ul>
+                    <li data-bind="text: 'in seeding: ' + seedingTorrents().length"></li>
+                    <li data-bind="text: 'in downloading: ' + downloadingTorrents().length"></li>
+                </ul>
+            </div>
+        </div>
+
+        <hr />
+
+        <div class="row">
+            <div class="col-sm-offset-4 col-sm-4">
+                <p>Current seeding torrent hashes:</p>
+                <ul data-bind="foreach: seedingTorrents">
+                    <li data-bind="text: infoHash"></li>
+                </ul>
+            </div>
+        </div>
+
+        <hr />
+
+        <div class="row">
+            <div class="col-sm-offset-4 col-sm-4">
+                <p>Share local files</p>
+                <input type="file" multiple id="input_file" />
+                <input type="submit" value="Share Local Files" data-bind="click: seedLocalFiles" />
+            </div>
+        </div>
+
+        <hr />
+
+        <div class="row">
+            <div class="col-sm-offset-4 col-sm-4">
+                <p>Download from webtorrent</p>
+                <input type="text" placeholder="torrent hash" data-bind="value: hashToDownload" />
+                <input type="submit" value="Download" data-bind="click: downloadHash" />
+            </div>
+        </div>
+
+        <hr />
+
+        <div class="row">
+            <div class="col-sm-offset-4 col-sm-4">
+                <p>Torrents in Download</p>
+                <ul data-bind="foreach: downloadingTorrents">
+                    <li>
+                        <a href="#" data-bind="text: infoHash, click: function(){ $parent.selectTorrent($data); }"></a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <hr />
+
+        <div class="row">
+            <p>Files in selected torrent</p>
+            <div data-bind="with: selectedTorrent">
+                <ul data-bind="foreach: files">
+                    <li>
+                        <a href="#" data-bind="text: name, click: function(){ $parents[1].selectFile($data); }"></a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <hr />
+
+        <div class="row">
+            <div id="div_playcontents">
+            </div>
+        </div>
+    </div>
+
+    <script src="Lib/jquery/jquery.min.js"></script>
+    <script src="Lib/knockout/knockout-latest.min.js"></script>
+    <script src="Lib/bootstrap/dist/js/bootstrap.min.js"></script>
+
+    <script src="Lib/jquery.blockUI/jquery.blockUI.min.js"></script>
+    <script src="Lib/toastr.js/toastr.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/webtorrent/latest/webtorrent.min.js"></script>
+
+    <script>
+        $(function () {
+            var ViewModel = function () {
+                var self = this;
+
+                self.client = new WebTorrent();
+                self.seedingTorrents = ko.observableArray();
+                self.downloadingTorrents = ko.observableArray();
+
+                self.hashToDownload = ko.observable();
+                self.selectedTorrent = ko.observable();
+                self.selectedFile = ko.observable();
+
+                self.seedLocalFiles = function () {
+                    var files = document.getElementById("input_file").files;
+
+                    $.each(files, function (k, fileEl) {
+                        self.client.seed(fileEl, function (torrent) {
+                            console.log('Client is seeding ' + torrent.infoHash);
+                            self.seedingTorrents.push(torrent);
+                        });
+                    });
+                };
+
+                self.downloadHash = function () {
+                    var torrentId = 'magnet:?xt=urn:btih:' + self.hashToDownload();
+                    self.client.add(torrentId, function (torrent) {
+                        torrent.on('wire', function (wire, addr) {
+                            console.log('connected to peer with address: ' + addr);
+                        });
+                        self.downloadingTorrents.push(torrent);
+                    });
+                };
+
+                self.selectTorrent = function (torrent) {
+                    self.selectedTorrent(torrent);
+                };
+
+                self.selectFile = function (file) {
+                    self.selectedFile(file);
+
+                    $('#div_playcontents').empty();
+                    file.appendTo('#div_playcontents');
+                };
+            };
+            ko.applyBindings(new ViewModel());
+        });
+    </script>
+</body>
+</html>

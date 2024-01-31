@@ -1,0 +1,32 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+<body>
+    <script src="Lib/jquery/jquery.min.js"></script>
+    <script src="Lib/js/XhrUtils.js"></script>
+    <script type="text/javascript">
+        $(function () {
+
+            var src1 = "http://aas.cdn.vizplay.org/v/e2f7e9bb82fffe429a9b384ed1238c76.mp4?st=Eqddrc9dVF_gUAojBW4S7A&amp;hash=2VWZaLY784bGSw9R-hqJfg";
+            var fileName1 = "e2f7e9bb82fffe429a9b384ed1238c76.mp4";
+
+            function success(file) {
+                var downloadLink = "<a href=" + URL.createObjectURL(file)
+                    + " download=" + file.name
+                    + ">Download " + file.name + "</a>"
+                    + "<br>type: " + file.type
+                    + "<br>last modified: " + file.lastModifiedDate;
+
+                var videoHtml = "<video controls src= '" + URL.createObjectURL(file) + "'></video>";
+
+                document.body.innerHTML = downloadLink + "<br/>" + videoHtml;
+            };
+            DownloadFile_Xhr(src1, fileName1, success);
+            //DownloadFileAsStream_Xhr(src1, fileName1, success);
+        });
+    </script>
+</body>
+</html>
